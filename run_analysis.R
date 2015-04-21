@@ -63,8 +63,8 @@ features <- read.table(file.path(dataDirectory, "features.txt"), header=FALSE)
 colnames(mergedFeaturesData) <- features[,2]
 
 ##get rid of Feature columns that do not include "mean" or "std"
-toKeep <- c("mean", "std")
-mergedFeaturesData <- mergedFeaturesData[, which(grepl(paste(toKeep, collapse="|"), colnames(mergedFeaturesData))),]
+featuresToKeep <- c("mean", "std")
+mergedFeaturesData <- mergedFeaturesData[, which(grepl(paste(featuresToKeep, collapse="|"), colnames(mergedFeaturesData))),]
 
 ##combine Subject, Activity and Features data into mergedProjectData
 mergedProjectData <- cbind(mergedSubjectData, mergedActivitiesData, mergedFeaturesData)
@@ -87,12 +87,9 @@ mergedProjectData <- merge(mergedProjectData, activities, by="activityId", all.x
 ##Letters "BodyBody" will be replaced by Body
 ##Letters "Gyro" will be replaced by Gyroscope
 ##Letters "Mag" will be replaced by Magnitude
-
-names(mergedProjectData) <- gsub("^f", "frequency", names(mergedProjectData))
-names(mergedProjectData) <- gsub("^t", "time", names(mergedProjectData))
-textToReplace <- c("-","()", "Acc", "BodyBody", "Gyro", "Mag")
-replacementText <- c("","", "Accelerometer", "Body", "Gyroscope", "Magnitude")
-names(mergedProjectData) <- mgsub(textToReplace, replacementText, names(mergedProjectData))
+textToReplace <- c("-","()", "^f", "^t","Acc", "BodyBody", "Gyro", "Mag")
+replacementText <- c("","", "frequency", "time","Accelerometer", "Body", "Gyroscope", "Magnitude")
+names(mergedProjectData) <- mgsub(textToReplace, replacementText, names(mergedProjectData), fixed=FALSE)
 
 ##create tidy data set with average of each feature by subject and activity
 tidyData <- aggregate(. ~subjectId + activityName, mergedProjectData, mean)
