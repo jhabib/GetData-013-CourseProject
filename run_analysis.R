@@ -1,5 +1,8 @@
-##Load dependencies of the script
-packages <- c("qdap", "plyr", "knitr")
+##Introduction
+##This script implements the run_analysis script required by the Course Project for GetData-013 on Coursera
+
+##Section 0: Load dependencies of the script
+packages <- c("qdap", "plyr")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -8,33 +11,24 @@ lapply(packages, library, character.only=TRUE)
 ##Section 1: Download and Unzip the Project Data
 ##
 
-##check to see if a project directory exists
-##create the directory if it does not exist
-if(!file.exists("~/GettingDataCourseProject/")){
-  dir.create("~/GettingDataCourseProject")
-}
-
-##set working directory to project directory
-setwd("~/GettingDataCourseProject/")
-
 ##check to see if a project data directory exists
 ##create the directory if it does not exist
-if(!file.exists("./data")){
-  dir.create("./data")
+if(!file.exists("./GetData-013-data")){
+  dir.create("./GetData-013-data")
 }
 
 ##download the UCI HAR Dataset if not alread in ./data/
-if(!file.exists("./data/UCIHARDataset.zip")){
-  dataUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
-  download.file(dataUrl, destfile="./data/UCIHARDataset.zip", method="auto")  
+if(!file.exists("./GetData-013-data/UCIHARDataset.zip")){
+  dataUrl <- "http://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+  download.file(dataUrl, destfile="./GetData-013-data/UCIHARDataset.zip", method="auto")  
 }
 
 ##unzip the data downloaded in "UCIHARDataset.zip"
-unzip(zipfile="./data/UCIHARDataset.zip", exdir="./data")
+unzip(zipfile="./GetData-013-data/UCIHARDataset.zip", exdir="./GetData-013-data")
 
 ##Section 2: Read data into R
 ##
-dataDirectory <- file.path("./data/UCI HAR Dataset/")
+dataDirectory <- file.path("./GetData-013-data/UCI HAR Dataset/")
 
 ##read in data from "test" folder
 testSubjects <- read.table(file.path(dataDirectory,"test","subject_test.txt"), header=FALSE)
@@ -78,6 +72,9 @@ activities <- read.table(file.path(dataDirectory, "activity_labels.txt"), header
 colnames(activities) <- c("activityId", "activityName")
 mergedProjectData <- merge(mergedProjectData, activities, by="activityId", all.x=TRUE)
 
+##drop the activityId column from the data frame because it is now redundant
+mergedProjectData$activityId <- NULL
+
 ##Column names have to be made more descriptive
 ##"-" will be replaced by ""
 ##"()" will be replaced by ""
@@ -87,7 +84,7 @@ mergedProjectData <- merge(mergedProjectData, activities, by="activityId", all.x
 ##Letters "BodyBody" will be replaced by Body
 ##Letters "Gyro" will be replaced by Gyroscope
 ##Letters "Mag" will be replaced by Magnitude
-textToReplace <- c("-","()", "^f", "^t","Acc", "BodyBody", "Gyro", "Mag")
+textToReplace <- c("-","\\()", "^f", "^t","Acc", "BodyBody", "Gyro", "Mag")
 replacementText <- c("","", "frequency", "time","Accelerometer", "Body", "Gyroscope", "Magnitude")
 names(mergedProjectData) <- mgsub(textToReplace, replacementText, names(mergedProjectData), fixed=FALSE)
 
@@ -95,5 +92,6 @@ names(mergedProjectData) <- mgsub(textToReplace, replacementText, names(mergedPr
 tidyData <- aggregate(. ~subjectId + activityName, mergedProjectData, mean)
 tidyData <- tidyData[order(tidyData$subjectId, tidyData$activityName),]
 
+##Section 5: Output the tidyData to tidyData.txt
 ##write the tidy data to an external file
 write.table(tidyData, file=file.path(dataDirectory, "tidyData.txt"), row.names=FALSE)
